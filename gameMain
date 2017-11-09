@@ -1,15 +1,63 @@
-contract gameMain {
+contract gameMain is commitReveal, helper {
 
     //System variables (only to be changed by owner)
     uint256 public deposit = 10; //Pfand, in wei
     uint256 public wager = 1; //wetteinsatz, in wei
     
     //Players
-    address[3] players = 0;
+    address[3] players = [0,0,0];
 
 	//Seed, Guess per player
-	mapping(address => uint8) seeds; //Werte zur Ermittlung der Gewinnzahl
-	mapping(address => uint8) guesses; //Tipp der Benutzer
+	mapping (address => uint8) seeds; //Werte zur Ermittlung der Gewinnzahl
+	mapping (address => uint8) guesses; //Tipp der Benutzer
 
+
+    //Wrapper für commit
+    function doCommit (bytes32 _in) payable returns (bool success) {
+        
+        success = true;
+        
+        if (msg.value == deposit+wager) {
+            
+            if (players[0] == 0) {
+                commit(_in);
+                players[0] = msg.sender;
+            } else if (players[1] == 0) {
+                commit(_in);
+                players[1] = msg.sender;
+            } else if (players[2] == 0) {
+                commit(_in);
+                players[2] = msg.sender;
+            } else {
+                success = false;
+            }
+        
+        } else {
+            success = false;
+        }
+        
+        if(!success) {
+            revert;
+        }
+        
+    }
+
+	//Wrapper für reveal
+	function doReveal (string _secret, uint8 _seed, uint8 _guess) returns (bool success) {
+	    
+	    success = true;
+	    
+        if (reveal (_secret, _seed, _guess)) {
+            seeds[msg.sender] = _seed;
+            guesses[msg.sender] = _guess;
+            
+            //Multiple Entry Attack possible!!!
+            msg.sender.send(deposit);
+        } else {
+            success = false;
+        }
+        
+	}
+	
 }
 
