@@ -10,7 +10,7 @@ contract gameMain is commitReveal, helper {
     uint256 public wager = 10; //wei
     
     //Players
-    address[3] players = [0,0,0];
+    address[3] public players = [0,0,0];
 
 	//Seed, Guess per player
 	mapping (address => uint8) seeds; //sum of seeds % 100 gives winning number
