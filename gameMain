@@ -1,0 +1,15 @@
+contract gameMain {
+
+    //System variables (only to be changed by owner)
+    uint256 public deposit = 10; //Pfand, in wei
+    uint256 public wager = 1; //wetteinsatz, in wei
+    
+    //Players
+    address[3] players = 0;
+
+	//Seed, Guess per player
+	mapping(address => uint8) seeds; //Werte zur Ermittlung der Gewinnzahl
+	mapping(address => uint8) guesses; //Tipp der Benutzer
+
+}
+

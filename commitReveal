@@ -1,0 +1,19 @@
+contract commitReveal {
+    
+    //Mappings
+    mapping(address => bytes32) commits;
+    
+    //Commitment
+    function commit(bytes32 _in) payable {
+        commits[msg.sender] = _in;
+    }
+    
+    //Reveal
+    function reveal(string _secret, uint8 _seed) returns(bool correct) {
+        if(commits[msg.sender] == keccak256(_secret, _seed)) {
+            correct = true;
+        }
+    }
+    
+}
+
