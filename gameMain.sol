@@ -1,24 +1,30 @@
+pragma solidity ^0.4.18;
+
+import "./commitReveal.sol";
+import "./helper.sol";
+
 contract gameMain is commitReveal, helper {
 
     //System variables (only to be changed by owner)
-    uint256 public deposit = 10; //Pfand, in wei
-    uint256 public wager = 1; //wetteinsatz, in wei
+    uint256 public deposit = 1000; //wei
+    uint256 public wager = 10; //wei
     
     //Players
     address[3] players = [0,0,0];
 
 	//Seed, Guess per player
-	mapping (address => uint8) seeds; //Werte zur Ermittlung der Gewinnzahl
-	mapping (address => uint8) guesses; //Tipp der Benutzer
+	mapping (address => uint8) seeds; //sum of seeds % 100 gives winning number
+	mapping (address => uint8) guesses; //players' guesses
 
 
-    //Wrapper für commit
-    function doCommit (bytes32 _in) payable returns (bool success) {
+    //Wrapper for commit
+    function doCommit (bytes32 _in) payable public returns (bool success) {
         
         success = true;
         
         if (msg.value == deposit+wager) {
             
+            //Add new player to free slot and accept his commit
             if (players[0] == 0) {
                 commit(_in);
                 players[0] = msg.sender;
@@ -36,18 +42,17 @@ contract gameMain is commitReveal, helper {
             success = false;
         }
         
-        if(!success) {
-            revert;
-        }
+        require(success);
         
     }
 
-	//Wrapper für reveal
-	function doReveal (string _secret, uint8 _seed, uint8 _guess) returns (bool success) {
+	//Wrapper for reveal
+	function doReveal (string _secret, uint8 _seed, uint8 _guess) public returns (bool success) {
 	    
 	    success = true;
 	    
         if (reveal (_secret, _seed, _guess)) {
+            
             //Prevent "Multiple Entry Attacks"
             if (players[0] == msg.sender) {
                 players[0] = 0;
@@ -58,6 +63,7 @@ contract gameMain is commitReveal, helper {
             } else {
                 success = false;
             }
+            
         } else {
             success = false;
         }
@@ -65,10 +71,9 @@ contract gameMain is commitReveal, helper {
         if(success) {
             seeds[msg.sender] = _seed;
             guesses[msg.sender] = _guess;
-            msg.sender.send(deposit);
+            msg.sender.transfer(deposit);
         }
         
 	}
 	
 }
-
