@@ -5,9 +5,12 @@ import "./helper.sol";
 
 contract gameMain is commitReveal, helper {
 
+    //Owner of contract
+    address owner;
+
     //System variables (only to be changed by owner)
-    uint256 public deposit = 1000; //wei
     uint256 public wager = 10; //wei
+    uint256 public deposit = 10 * wager;
     
     //Players
     address[3] public players = [0,0,0];
@@ -16,6 +19,13 @@ contract gameMain is commitReveal, helper {
 	mapping (address => uint8) seeds; //sum of seeds % 100 gives winning number
 	mapping (address => uint8) guesses; //players' guesses
 
+
+    //Constructor
+    function gameMain () internal {
+        
+        owner = msg.sender;
+        
+    }
 
     //Wrapper for commit
     function doCommit (bytes32 _in) payable public returns (bool success) {
@@ -74,6 +84,22 @@ contract gameMain is commitReveal, helper {
             msg.sender.transfer(deposit);
         }
         
+	}
+	
+	//Function for owner to change system variables
+	function changeWager (uint256 _wager) public onlyOwner {
+	    
+	    wager = _wager;
+	    deposit = 10 * wager;
+	    
+	}
+	
+	//Modifier to restrict access to owner
+	modifier onlyOwner {
+	    
+        require(msg.sender == owner);
+    	_;
+    	
 	}
 	
 }
