@@ -13,7 +13,9 @@ contract gameMain is commitReveal, helper {
     uint256 public deposit = 10 * wager;
     
     //Players
-    address[3] public players = [0,0,0];
+    address[3] public players = [0x0000000000000000000000000000000000000000,
+                                 0x0000000000000000000000000000000000000000,
+                                 0x0000000000000000000000000000000000000000];
 
 	//Seed, Guess per player
 	mapping (address => uint8) seeds; //sum of seeds % 100 gives winning number
@@ -21,7 +23,7 @@ contract gameMain is commitReveal, helper {
 
 
     //Constructor
-    function gameMain () internal {
+    function gameMain () public {
         
         owner = msg.sender;
         
@@ -35,15 +37,18 @@ contract gameMain is commitReveal, helper {
         if (msg.value == deposit+wager) {
             
             //Add new player to free slot and accept his commit
-            if (players[0] == 0) {
+            if (players[0] == 0x0000000000000000000000000000000000000000) {
                 commit(_in);
                 players[0] = msg.sender;
-            } else if (players[1] == 0) {
+                notifyNewPlayer(msg.sender, "Player 1 entered.", false);
+            } else if (players[1] == 0x0000000000000000000000000000000000000000) {
                 commit(_in);
                 players[1] = msg.sender;
-            } else if (players[2] == 0) {
+                notifyNewPlayer(msg.sender, "Player 2 entered.", false);
+            } else if (players[2] == 0x0000000000000000000000000000000000000000) {
                 commit(_in);
                 players[2] = msg.sender;
+                notifyNewPlayer(msg.sender, "Player 3 entered.", true);
             } else {
                 success = false;
             }
@@ -65,11 +70,15 @@ contract gameMain is commitReveal, helper {
             
             //Prevent "Multiple Entry Attacks"
             if (players[0] == msg.sender) {
-                players[0] = 0;
+                players[0] = 0x0000000000000000000000000000000000000000;
+                notifyRevelation(msg.sender, "Player 1 revealed his commitment.");
             } else if (players[1] == msg.sender) {
-                players[1] = 0;
+                players[1] = 0x0000000000000000000000000000000000000000;
+                notifyRevelation(msg.sender, "Player 2 revealed his commitment.");
             } else if (players[2] == msg.sender) {
-                players[2] = 0;
+                players[2] = 0x0000000000000000000000000000000000000000;
+                notifyRevelation(msg.sender, "Player 3 revealed his commitment.");
+                //Aufruf an Gewinnziehung
             } else {
                 success = false;
             }
@@ -78,10 +87,10 @@ contract gameMain is commitReveal, helper {
             success = false;
         }
         
-        if(success) {
+        if (success) {
             seeds[msg.sender] = _seed;
             guesses[msg.sender] = _guess;
-            msg.sender.transfer(deposit);
+            msg.sender.transfer (deposit);
         }
         
 	}
@@ -94,7 +103,11 @@ contract gameMain is commitReveal, helper {
 	    
 	}
 	
-	//Modifier to restrict access to owner
+	//Events
+	event notifyNewPlayer (address _player, string _msg, bool final);
+	event notifyRevelation (address _player, string _msg);
+	
+	//Modifiers
 	modifier onlyOwner {
 	    
         require(msg.sender == owner);
