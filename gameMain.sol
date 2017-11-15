@@ -10,6 +10,7 @@ contract gameMain is commitReveal, helper {
 
     //System variables (only to be changed by owner)
     uint256 public wager = 10; //wei
+    uint256 public fee = 0; //wei
     uint256 public deposit = 10 * wager;
     
     //Players
@@ -18,8 +19,14 @@ contract gameMain is commitReveal, helper {
                                  0x0000000000000000000000000000000000000000];
 
 	//Seed, Guess per player
-	mapping (address => uint8) seeds; //sum of seeds % 100 gives winning number
+	mapping (address => uint8) seeds; //sum of seeds % 100 gives winningNumber
 	mapping (address => uint8) guesses; //players' guesses
+	
+	//Other variables
+	uint8 public numRevelations = 0;
+	uint8 public winningNumber;
+	
+	mapping (address => bool) hasDeposit;
 	
 	//Flags
 	bool acceptRevelations = false;
@@ -61,6 +68,10 @@ contract gameMain is commitReveal, helper {
             success = false;
         }
         
+        if(success) {
+            hasDeposit[msg.sender] = true;
+        }
+        
         require(success);
         
     }
@@ -72,17 +83,12 @@ contract gameMain is commitReveal, helper {
 	    
         if (reveal (_secret, _seed, _guess) && acceptRevelations) {
             
-            //Prevent "Multiple Entry Attacks"
             if (players[0] == msg.sender) {
-                players[0] = 0x0000000000000000000000000000000000000000;
                 notifyRevelation(msg.sender, "Player 1 revealed his commitment.");
             } else if (players[1] == msg.sender) {
-                players[1] = 0x0000000000000000000000000000000000000000;
                 notifyRevelation(msg.sender, "Player 2 revealed his commitment.");
             } else if (players[2] == msg.sender) {
-                players[2] = 0x0000000000000000000000000000000000000000;
                 notifyRevelation(msg.sender, "Player 3 revealed his commitment.");
-                //Aufruf an Gewinnziehung
             } else {
                 success = false;
             }
@@ -92,24 +98,100 @@ contract gameMain is commitReveal, helper {
         }
         
         if (success) {
-            seeds[msg.sender] = _seed;
-            guesses[msg.sender] = _guess;
-            msg.sender.transfer (deposit);
+            numRevelations++;
+            
+            seeds[msg.sender] = _seed % 100;
+            guesses[msg.sender] = _guess % 100;
+            hasDeposit[msg.sender] = false; //Prevent "Multiple Entry Attacks"
+            msg.sender.transfer(deposit);
+            
+            if (numRevelations == 3) {
+                determine_winner();
+            }
         }
         
 	}
 	
-	//Function for owner to change system variables
-	function changeWager (uint256 _wager) public onlyOwner {
+	//Function to calculate winningNumber
+	function calculate_winningNumber () internal {
 	    
-	    wager = _wager;
-	    deposit = 10 * wager;
+	    uint256 sumOfSeeds = 0;
+	    
+        for (uint8 i=0; i<3; i++) {
+           sumOfSeeds = sumOfSeeds + seeds[players[i]];
+        }
+        
+        winningNumber = sumOfSeeds % 100;
 	    
 	}
 	
+	//Function to determine winner
+	function determine_winner () internal {
+	    
+	    uint8 multiWinners = 0;
+	    address winner = players[1];
+	    address winner_candidates[2];
+	    
+	    mapping(address => uint8) difference;
+	    
+	    calculate_winningNumber();
+	    
+        //Calculate difference to winningNumber for each player's guess
+        for (uint8 i=0; i<3; i++) {
+            difference[players[i]] = diff(winningNumber, guesses[players[i]]);
+        }
+
+        //Check for smallest difference => winner
+        //If multiple players have the same difference a lot will be drawn
+        for (uint8 i=1; i<3; i++) {
+            
+            if (difference[players[i]] < difference[winner]) {
+                //Smallest distance => single winner
+                winner = players[i];
+				multiWinners = 0;
+            } else if (difference[players[i]] == difference[winner]) {
+                //Same distance => multiple winner candidates
+				winner_candidates[multiWinners] = players[i];
+				multiWinners++;
+            }
+            
+        }
+        
+        //Draw a lot if there are multiple winner candidates
+        if (multiWinners) {
+            
+            //TODO: r = RANDOM 0..2
+            r == 0;
+            
+            if (r) {
+                winner = winner_candidates[r-1];
+            }
+            
+        }
+        
+        winner.transfer(3 * wager - fee);
+        anounceWinner(winner, "We have a winner!");
+        
+        //TODO: Initialize new round
+		
+    }
+	
+	//Function for owner to change system variables
+	function changeVariables (uint256 _wager, uint256 _fee) public onlyOwner {
+	    
+	    wager = _wager;
+	    fee = _fee;
+	    deposit = 10 * _wager;
+	    
+	}
+	
+	// --------------------------------
+	
 	//Events
+	//TODO: Simplify to single event?
 	event notifyNewPlayer (address _player, string _msg);
 	event notifyRevelation (address _player, string _msg);
+	event anounceWinner(address _winner, string _msg);
 	
 	//Modifiers
 	modifier onlyOwner {
