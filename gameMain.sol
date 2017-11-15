@@ -20,6 +20,9 @@ contract gameMain is commitReveal, helper {
 	//Seed, Guess per player
 	mapping (address => uint8) seeds; //sum of seeds % 100 gives winning number
 	mapping (address => uint8) guesses; //players' guesses
+	
+	//Flags
+	bool acceptRevelations = false;
 
 
     //Constructor
@@ -40,15 +43,16 @@ contract gameMain is commitReveal, helper {
             if (players[0] == 0x0000000000000000000000000000000000000000) {
                 commit(_in);
                 players[0] = msg.sender;
-                notifyNewPlayer(msg.sender, "Player 1 entered.", false);
+                notifyNewPlayer(msg.sender, "Player 1 entered.");
             } else if (players[1] == 0x0000000000000000000000000000000000000000) {
                 commit(_in);
                 players[1] = msg.sender;
-                notifyNewPlayer(msg.sender, "Player 2 entered.", false);
+                notifyNewPlayer(msg.sender, "Player 2 entered.");
             } else if (players[2] == 0x0000000000000000000000000000000000000000) {
                 commit(_in);
                 players[2] = msg.sender;
-                notifyNewPlayer(msg.sender, "Player 3 entered.", true);
+                notifyNewPlayer(msg.sender, "Player 3 entered.");
+                acceptRevelations = true;
             } else {
                 success = false;
             }
@@ -66,7 +70,7 @@ contract gameMain is commitReveal, helper {
 	    
 	    success = true;
 	    
-        if (reveal (_secret, _seed, _guess)) {
+        if (reveal (_secret, _seed, _guess) && acceptRevelations) {
             
             //Prevent "Multiple Entry Attacks"
             if (players[0] == msg.sender) {
@@ -104,7 +108,7 @@ contract gameMain is commitReveal, helper {
 	}
 	
 	//Events
-	event notifyNewPlayer (address _player, string _msg, bool _final);
+	event notifyNewPlayer (address _player, string _msg);
 	event notifyRevelation (address _player, string _msg);
 	
 	//Modifiers
