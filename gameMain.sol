@@ -104,7 +104,7 @@ contract gameMain is commitReveal, helper {
 	}
 	
 	//Events
-	event notifyNewPlayer (address _player, string _msg, bool final);
+	event notifyNewPlayer (address _player, string _msg, bool _final);
 	event notifyRevelation (address _player, string _msg);
 	
 	//Modifiers
