@@ -27,6 +27,7 @@ contract gameMain is commitReveal, helper {
 	uint8 public winningNumber;
 	
 	mapping (address => bool) hasDeposit;
+	mapping (address => uint8) difference;
 	
 	//Flags
 	bool acceptRevelations = false;
@@ -36,6 +37,7 @@ contract gameMain is commitReveal, helper {
     function gameMain () public {
         
         owner = msg.sender;
+        newRound();
         
     }
 
@@ -121,29 +123,29 @@ contract gameMain is commitReveal, helper {
            sumOfSeeds = sumOfSeeds + seeds[players[i]];
         }
         
-        winningNumber = sumOfSeeds % 100;
+        winningNumber = uint8(sumOfSeeds % 100);
 	    
 	}
 	
 	//Function to determine winner
 	function determine_winner () internal {
 	    
+	    uint8 i;
+	    
 	    uint8 multiWinners = 0;
 	    address winner = players[1];
-	    address winner_candidates[2];
-	    
-	    mapping(address => uint8) difference;
+	    address[2] winner_candidates;
 	    
 	    calculate_winningNumber();
 	    
         //Calculate difference to winningNumber for each player's guess
-        for (uint8 i=0; i<3; i++) {
+        for (i=0; i<3; i++) {
             difference[players[i]] = diff(winningNumber, guesses[players[i]]);
         }
 
         //Check for smallest difference => winner
         //If multiple players have the same difference a lot will be drawn
-        for (uint8 i=1; i<3; i++) {
+        for (i=1; i<3; i++) {
             
             if (difference[players[i]] < difference[winner]) {
                 //Smallest distance => single winner
@@ -158,12 +160,12 @@ contract gameMain is commitReveal, helper {
         }
         
         //Draw a lot if there are multiple winner candidates
-        if (multiWinners) {
+        if (multiWinners > 0) {
             
-            //TODO: r = RANDOM 0..2
-            r == 0;
+            //TODO: r = RANDOM 0..multiWinners
+            uint8 r = 0;
             
-            if (r) {
+            if (r > 0) {
                 winner = winner_candidates[r-1];
             }
             
@@ -172,8 +174,24 @@ contract gameMain is commitReveal, helper {
         winner.transfer(3 * wager - fee);
         anounceWinner(winner, "We have a winner!");
         
-        //TODO: Initialize new round
+        newRound();
 		
+    }
+    
+    //Function to initialize a new round
+    function newRound () internal {
+        
+        //Clear Players
+        address[3] public players = [0x0000000000000000000000000000000000000000,
+                                     0x0000000000000000000000000000000000000000,
+                                     0x0000000000000000000000000000000000000000];
+    	
+    	//Clear other variables
+    	uint8 public numRevelations = 0;
+    	
+    	//Clear flags
+    	bool acceptRevelations = false;
+        
     }
 	
 	//Function for owner to change system variables
@@ -184,8 +202,6 @@ contract gameMain is commitReveal, helper {
 	    deposit = 10 * _wager;
 	    
 	}
-	
-	// --------------------------------
 	
 	//Events
 	//TODO: Simplify to single event?
