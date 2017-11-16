@@ -14,23 +14,21 @@ contract gameMain is commitReveal, helper {
     uint256 public deposit = 10 * wager;
     
     //Players
-    address[3] public players = [0x0000000000000000000000000000000000000000,
-                                 0x0000000000000000000000000000000000000000,
-                                 0x0000000000000000000000000000000000000000];
+    address[3] public players;
 
 	//Seed, Guess per player
-	mapping (address => uint8) seeds; //sum of seeds % 100 gives winningNumber
-	mapping (address => uint8) guesses; //players' guesses
+	mapping (address => uint8) /**/public seeds; //sum of seeds % 100 gives winningNumber
+	mapping (address => uint8) /**/public guesses; //players' guesses
 	
 	//Other variables
-	uint8 public numRevelations = 0;
+	uint8 public numRevelations;
 	uint8 public winningNumber;
 	
-	mapping (address => bool) hasDeposit;
-	mapping (address => uint8) difference;
+	mapping (address => bool) /**/public hasDeposit;
+	mapping (address => uint8) /**/public difference;
 	
 	//Flags
-	bool acceptRevelations = false;
+	bool public acceptRevelations;
 
 
     //Constructor
@@ -81,22 +79,21 @@ contract gameMain is commitReveal, helper {
 	//Wrapper for reveal
 	function doReveal (string _secret, uint8 _seed, uint8 _guess) public returns (bool success) {
 	    
-	    success = true;
+	    success = false;
 	    
         if (reveal (_secret, _seed, _guess) && acceptRevelations) {
             
             if (players[0] == msg.sender) {
+                success = true;
                 notifyRevelation(msg.sender, "Player 1 revealed his commitment.");
             } else if (players[1] == msg.sender) {
+                success = true;
                 notifyRevelation(msg.sender, "Player 2 revealed his commitment.");
             } else if (players[2] == msg.sender) {
+                success = true;
                 notifyRevelation(msg.sender, "Player 3 revealed his commitment.");
-            } else {
-                success = false;
             }
             
-        } else {
-            success = false;
         }
         
         if (success) {
@@ -133,7 +130,7 @@ contract gameMain is commitReveal, helper {
 	    uint8 i;
 	    
 	    uint8 multiWinners = 0;
-	    address winner = players[1];
+	    address winner = players[0];
 	    address[2] winner_candidates;
 	    
 	    calculate_winningNumber();
@@ -162,8 +159,7 @@ contract gameMain is commitReveal, helper {
         //Draw a lot if there are multiple winner candidates
         if (multiWinners > 0) {
             
-            //TODO: r = RANDOM 0..multiWinners
-            uint8 r = 0;
+            uint8 r = winningNumber % (multiWinners+1);
             
             if (r > 0) {
                 winner = winner_candidates[r-1];
@@ -179,18 +175,19 @@ contract gameMain is commitReveal, helper {
     }
     
     //Function to initialize a new round
-    function newRound () internal {
-    
+    //TODO: pay back deposits if owner resets the game
+    function newRound () public onlyOwner {
+        
         //Clear Players
-        address[3] public players = [0x0000000000000000000000000000000000000000,
-                                     0x0000000000000000000000000000000000000000,
-                                     0x0000000000000000000000000000000000000000];
+        players = [0x0000000000000000000000000000000000000000,
+                   0x0000000000000000000000000000000000000000,
+                   0x0000000000000000000000000000000000000000];
     	
     	//Clear other variables
-    	uint8 public numRevelations = 0;
+    	numRevelations = 0;
     	
     	//Clear flags
-    	bool acceptRevelations = false;
+    	acceptRevelations = false;
         
     }
 	
@@ -207,7 +204,7 @@ contract gameMain is commitReveal, helper {
 	//TODO: Simplify to single event?
 	event notifyNewPlayer (address _player, string _msg);
 	event notifyRevelation (address _player, string _msg);
-	event anounceWinner(address _winner, string _msg);
+	event anounceWinner (address _winner, string _msg);
 	
 	//Modifiers
 	modifier onlyOwner {
