@@ -180,7 +180,7 @@ contract gameMain is commitReveal, helper {
     
     //Function to initialize a new round
     function newRound () internal {
-        
+    
         //Clear Players
         address[3] public players = [0x0000000000000000000000000000000000000000,
                                      0x0000000000000000000000000000000000000000,
