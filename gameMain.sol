@@ -83,6 +83,7 @@ contract gameMain is commitReveal, helper {
 	    
         if (reveal (_secret, _seed, _guess) && acceptRevelations) {
             
+            
             if (players[0] == msg.sender) {
                 success = true;
                 notifyRevelation(msg.sender, "Player 1 revealed his commitment.");
