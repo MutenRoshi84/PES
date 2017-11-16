@@ -83,7 +83,6 @@ contract gameMain is commitReveal, helper {
 	    
         if (reveal (_secret, _seed, _guess) && acceptRevelations) {
             
-            
             if (players[0] == msg.sender) {
                 success = true;
                 notifyRevelation(msg.sender, "Player 1 revealed his commitment.");
@@ -177,7 +176,7 @@ contract gameMain is commitReveal, helper {
     
     //Function to initialize a new round
     //TODO: pay back deposits if owner resets the game
-    function newRound () public onlyOwner {
+    function newRound () internal {
         
         //Clear Players
         players = [0x0000000000000000000000000000000000000000,
